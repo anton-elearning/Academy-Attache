@@ -1076,35 +1076,88 @@ html {
 }
 
 /* Размытая картинка под поп-апом */
+/* ----------------------------------------------------------
+   CINEMATIC LOCATION TRANSITION
+   1. Сначала интерьер показывается четко.
+   2. Затем размывается и затемняется.
+   3. После этого появляется поп-ап.
+---------------------------------------------------------- */
+
+.overlay {
+    background: rgba(7, 8, 12, 0);
+    transition: background 0.85s ease;
+}
+
 .overlay::before {
     content: "";
     position: absolute;
     z-index: -1;
-
-    /* Запас по краям нужен, чтобы размытие не показало пустые полосы */
-    inset: -28px;
-
+    inset: 0;
     background-image: var(--location-background, none);
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
 
-    filter: blur(6px) brightness(0.82) saturate(0.9);
-    transform: scale(1.03);
+    /* Четкая картинка в первый момент */
+    filter: blur(0) brightness(1) saturate(1);
+    transform: scale(1);
     opacity: 0;
 
-    transition: opacity 0.45s ease;
+    transition:
+        opacity 0.35s ease,
+        filter 1s ease,
+        transform 1s ease;
 }
 
-/* Картинка становится видимой только у локации с background */
+/* Шаг 1: показываем чистый интерьер */
 .overlay.active.has-location-background::before {
     opacity: 1;
 }
 
-/* Затемняем картинку, чтобы она не спорила со светлым лонгридом */
-.overlay.active.has-location-background {
-    background: rgba(7, 8, 12, 0.66);
+/* Шаг 2: через класс cinematic-blur включаем размытие */
+.overlay.cinematic-blur::before {
+    filter: blur(7px) brightness(0.76) saturate(0.88);
+    transform: scale(1.04);
 }
+
+/* Затемняем слой одновременно с размытием */
+.overlay.cinematic-blur {
+    background: rgba(7, 8, 12, 0.64);
+}
+
+/* Не показываем окно сразу */
+/* Пока показан четкий интерьер, поп-ап не должен вспыхивать.
+   !important перекрывает старую animation: popupAppear. */
+.overlay.cinematic-opening .popup {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transform: translateY(18px) scale(0.985) !important;
+    pointer-events: none !important;
+    animation: none !important;
+    transition: none !important;
+}
+/* Через две секунды возвращаем поп-ап и запускаем плавное появление */
+.overlay.cinematic-ready .popup {
+    visibility: visible !important;
+    opacity: 1 !important;
+    transform: translateY(0) scale(1) !important;
+    pointer-events: auto !important;
+    animation: none !important;
+    transition:
+        opacity 0.55s ease-out,
+        transform 0.55s ease-out !important;
+}
+
+/* Финальное появление окна */
+.overlay.cinematic-ready .popup {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+    transition:
+        opacity 0.55s ease-out,
+        transform 0.55s ease-out;
+}
+
 .btn-black.btn-outline {
     background-color: transparent;
     color: #1a1a1a;
@@ -1405,7 +1458,6 @@ html {
 #### Лаунж
 ### 1.4 Сигарная комната
 #### Большой зал
-### 1.5. айфрейм
 ## 2. Крыло The Conversation Wing
 ### 2.1. Каминная гостиная
 #### Балкон над Большим залом 
@@ -1413,16 +1465,15 @@ html {
 #### Интеллектуальный поединок студентов
 ### 2.3. Комната закрытых портретов
 #### Кабинет редких вещей Байера
-### 2.4. Техника активного слушания
+### 2.4. Фойе собеседников
 #### Комната Эха
-### 2.5. Галерея последних фраз
 ## 3. Башня The Influence Tower
 ### 3.1. Обсерватория расстановки сил
 #### Зал Хозяев вечера 
 ### 3.2. Ротонда первого шага
 #### Мост малых кругов
 ### 3.3. Оранжерея забытых гостей
-#### Интернет-кафе коворкинг
+#### Старая библиотека
 ### 3.4. Галерея последних фраз
 #### Кабинет Стратегии
 ##### 0.Outro
@@ -1434,7 +1485,7 @@ html {
      
        "0. Intro": 
      {
-    background: "https://static.tildacdn.com/tild3166-6164-4833-b062-366137383262/_.png",
+    background: "https://static.tildacdn.com/tild3933-6565-4364-b761-373263373336/photo.png",
 
     content:
     `
@@ -1443,9 +1494,9 @@ html {
     </p>
 
     <p>
-        Добрый вечер. Меня зовут <strong>Мишель</strong>. Я ассистент
+        У входных дверей вас встречает <strong>Мишель</strong>. Она ассистент
         Куратора закрытого крыла Академии. Последние
-        десять лет я встречаю Кандидатов у тех дверей, за которыми привычные
+        десять лет она встречает Кандидатов у тех дверей, за которыми привычные
         правила делового мира перестают работать.
     </p>
 
@@ -1724,7 +1775,8 @@ html {
 
         <!-- Скрытый блок: открывается после кнопки «Приступить» -->
         <div class="locked-theory" id="theory-block-13">
-            <h3>Заполнение дата-сета</h3>
+            <br>
+                <h3>Заполнение дата-сета</h3>
     <p>Заполните контрольный датасет банка вопросов. В блоке присутствуют как одиночные ситуации, так и задачи с несколькими верными действиями.</p>
 
     <div class="dataset-container">
@@ -2129,26 +2181,26 @@ html {
 
   <section class="principles">
     <div class="rule-block">
-      <h3>Правило &numero;1. &laquo;Деловой треугольник&raquo;</h3>
+      <h4>Правило &numero;1. &laquo;Деловой треугольник&raquo;</h4>
       <p>При общении с высокопоставленными лицами или в рамках формальных переговоров следует избегать блуждающего взгляда. Оптимальная зона для фокусировки &mdash; так называемый <em>&laquo;деловой треугольник&raquo;</em>. Представьте воображаемый треугольник на лице собеседника: его основание проходит по линии глаз, а вершина находится на переносице (чуть выше линии бровей).</p>
       <p>Удержание взгляда в этой зоне демонстрирует серьезность намерений и контроль над ситуацией. Перемещение фокуса ниже линии глаз (в зону носа и губ) переводит общение в регистр &laquo;социального&raquo; или дружеского взаимодействия, что может быть неуместно на статусных мероприятиях.</p>
     </div>
 
     <div class="rule-block">
-      <h3>Правило &numero;2. Баланс времени: 60/40</h3>
+      <h4>Правило &numero;2. Баланс времени: 60/40</h4>
       <p>Непрерывный зрительный контакт вызывает психологический дискомфорт. Классический протокол светской беседы (Small Talk) предполагает следующую пропорцию: <strong>примерно 60% времени</strong> вы смотрите в глаза собеседнику, а <strong>40% времени</strong> &mdash; отводите взгляд.</p>
       <p>Критически важно направление, в котором вы отводите глаза. Делать это следует по горизонтали (вправо или влево), демонстрируя процесс обдумывания информации. Отведение взгляда вниз подсознательно считывается как признание подчиненного положения и моментально снижает ваш статус в глазах визави.</p>
     </div>
 
     <div class="rule-block">
-      <h3>Правило &numero;3. Специфика локального протокола</h3>
+      <h4>Правило &numero;3. Специфика локального протокола</h4>
       <p>Нормы зрительного контакта варьируются в зависимости от культурного контекста. В российской деловой культуре требования к прямому взгляду более жесткие, чем в западноевропейской.</p>
       <p>Прямой зрительный контакт здесь является синонимом честности и открытости намерений. Если при ответе на острый или принципиально важный вопрос собеседник начинает отводить глаза вверх или в сторону, это интерпретируется как попытка уйти от ответа, скрыть информацию или как признак неуверенности в своей позиции. Важные тезисы всегда должны озвучиваться при прямом визуальном контакте.</p>
     </div>
   </section>
 
   <section class="scanning-technique">
-    <h3>Вход в помещение: Визуальное сканирование</h3>
+    <h4>Вход в помещение: Визуальное сканирование</h4>
     <p>Первое впечатление формируется в момент вашего появления в зале. При входе недопустимо опускать подбородок или смотреть под ноги. Взгляд должен плавно скользить по помещению чуть выше голов присутствующих. Подобное <em>&laquo;панорамное сканирование&raquo;</em> демонстрирует уверенное владение территорией и позволяет мгновенно оценить расстановку сил и расположение ключевых персон.</p>
   </section>
 </article>
@@ -2181,7 +2233,8 @@ html {
 
         <!-- Скрытый блок: открывается после кнопки «Приступить» -->
         <div class="locked-theory" id="theory-block-13">
-            <h3>Заполнение дата-сета</h3>
+            <br>
+            <h4>Заполнение дата-сета</h4>
 
 <p>
     Заполните контрольный датасет банка вопросов. В блоке присутствуют
@@ -2613,7 +2666,7 @@ html {
 
     <div class="inline-complete-box">
         <button class="inline-complete-btn" onclick="closePopup()">
-            Перейти в Галерею последних фраз ✓
+            Перейти в Крыло The Conversation Wing ✓
         </button>
     </div>
 </div>
@@ -2622,7 +2675,7 @@ html {
 
 "2.1. Каминная гостиная": 
      {
-    background: "https://static.tildacdn.com/tild3166-6164-4833-b062-366137383262/_.png",
+    background: "https://static.tildacdn.com/tild6664-3533-4162-b366-376230353138/21__.png",
 
     content:
     `
@@ -2776,11 +2829,11 @@ html {
 
   "Балкон над Большим залом": 
      {
-    background: "https://static.tildacdn.com/tild3166-6164-4833-b062-366137383262/_.png",
+    background: "https://static.tildacdn.com/tild6537-6232-4664-b861-333836326439/21___.png",
 
     content:
     `
-      <h3>Кейс: «Сначала контракт»</h3>
+      <h4>Кейс: «Сначала контракт»</h4>
 
 <article class="story-scene">
 
@@ -3027,7 +3080,7 @@ html {
 
   "2.2. Музыкальный салон": 
      {
-    background: "https://static.tildacdn.com/tild3166-6164-4833-b062-366137383262/_.png",
+    background: "https://static.tildacdn.com/tild6262-6262-4364-a265-366534346630/22__.png",
 
     content:
     `
@@ -3259,7 +3312,7 @@ html {
   
 
 "Интеллектуальный поединок студентов": {
-    background: "https://static.tildacdn.com/tild3261-3639-4338-b236-613632393739/generated-image_21.png",
+    background: "https://static.tildacdn.com/tild3861-6461-4333-b565-643038376634/22_.png",
 
     content: `
         <div class="battle-container">
@@ -3276,7 +3329,7 @@ html {
 
 "2.3. Комната закрытых портретов": 
      {
-    background: "https://static.tildacdn.com/tild3166-6164-4833-b062-366137383262/_.png",
+    background: "https://static.tildacdn.com/tild3235-3934-4262-b938-326435373966/_.png",
 
     content:
     `
@@ -3551,7 +3604,7 @@ html {
 
   "Кабинет редких вещей Байера": 
      {
-    background: "https://static.tildacdn.com/tild3166-6164-4833-b062-366137383262/_.png",
+    background: "https://static.tildacdn.com/tild6532-6338-4362-b935-386561386363/23__.png",
 
     content:
     `
@@ -3813,28 +3866,21 @@ html {
         </p>
     </section>
 
-    <div class="inline-complete-box">
-        <button
-            type="button"
-            class="inline-complete-btn"
-            onclick="closePopup()">
-            Получить серебряную карточку Байера ✓
-        </button>
-    </div>
+    
 
 </article>
         
    <!-- КНОПКА ЗАВЕРШИТЬ В САМОМ КОНЦЕ ТЕОРИИ -->
         <div class="inline-complete-box">
             <button class="inline-complete-btn" onclick="closePopup()">
-                Перейти в Музыкальный салон ✓
+              Перейти в Фойе собеседников ✓
             </button>
         </div>
     </div>
   `},
 
-"2.4. Техника активного слушания": {
-    background: "https://static.tildacdn.com/tild3235-3934-4262-b938-326435373966/_.png",
+"2.4. Фойе собеседников": {
+    background: "https://static.tildacdn.com/tild3636-6163-4136-b736-303831653031/24__.png",
 
     content: `
          <h3>Глава 2.4. <br>Техника активного слушания</h3>
@@ -4009,7 +4055,7 @@ html {
         </div>
 
         <div class="rule-block">
-            <h4>Слова-маркеры</h4>
+            <h5>Слова-маркеры</h5>
 
             <ul>
                 <li>«Другими словами…»</li>
@@ -4075,6 +4121,7 @@ html {
 
         <!-- Скрытый блок: открывается после кнопки «Приступить» -->
         <div class="locked-theory" id="theory-block-24">
+            <br>
             <h3>Заполнение дата-сета</h3>
 
 <p>
@@ -4281,7 +4328,7 @@ html {
 
 "Комната Эха": 
      {
-    background: "https://static.tildacdn.com/tild3166-6164-4833-b062-366137383262/_.png",
+    background: "https://static.tildacdn.com/tild6533-6330-4135-a230-323763663232/24_.png",
 
     content:
     `
@@ -4572,331 +4619,12 @@ html {
    
   `},
 
-"2.5. Галерея последних фраз": 
-     {
-    background: "https://static.tildacdn.com/tild3166-6164-4833-b062-366137383262/_.png",
 
-    content:
-    `
-     <h3>Переходная галерея</h3>
-
-<article class="story-scene">
-
-    
-
-    <p class="first-paragraph">
-        Переходная галерея соединяет главные залы Академии. Здесь не проводят
-        лекций и не устраивают приемов. Через нее проходят тогда, когда одна
-        встреча уже дала все, что могла дать, а следующая еще не началась.
-    </p>
-
-    <p>
-        Студенты называют ее Галереей последних фраз. Вдоль стен стоят
-        консольные столики с программами закрытых вечеров, а в конце коридора
-        висит высокое старинное зеркало. Говорят, оно запоминает не того,
-        кто уходит, а того, кого оставили после разговора.
-    </p>
-
-    <blockquote>
-        <p>
-            Не исчезайте — завершайте.<br>
-            Не оправдывайтесь — благодарите.<br>
-            Не обрывайте разговор — оставляйте мост.
-        </p>
-    </blockquote>
-
-    <p>
-        Здесь Кандидаты изучают один из самых недооцененных навыков:
-        уйти вовремя, не разрушив интереса, доверия и возможности продолжить
-        разговор позднее.
-    </p>
-
-</article>
-
-
-<h3>Глава 2.5. <br>Искусство выхода из беседы</h3>
-
-<article class="conversation-exit-guide">
-
-    <header>
-        <p class="location-kicker">
-            Академия Атташе · Переходная галерея
-        </p>
-
-        <h4>Как уйти, чтобы вас запомнили</h4>
-    </header>
-
-    <p class="first-paragraph">
-        Правило светского этикета гласит: идеальная продолжительность
-        Small Talk с одним человеком на фуршете составляет от пяти до десяти минут.
-    </p>
-
-    <p>
-        Задерживаться дольше — значит нарушать динамику мероприятия.
-        Нетворкинг предполагает общение с разными людьми, а слишком долгий
-        разговор рискует исчерпать себя и завершиться неловкой паузой.
-    </p>
-
-    <blockquote>
-        <p>
-            Завершайте разговор не тогда, когда он уже исчерпан,
-            а тогда, когда в нем еще остается интерес.
-        </p>
-    </blockquote>
-
-    <p>
-        Главная сложность для большинства людей заключается не в том,
-        о чем говорить, а в том, как вовремя и вежливо уйти. Для этого
-        существуют три базовые техники, позволяющие завершить контакт
-        на высокой ноте.
-    </p>
-
-    <section class="theory-section">
-        <h4>1. Техника «Безупречная причина»</h4>
-
-        <p>
-            Главное правило прерывания беседы — никогда не говорить,
-            что вам скучно или что вы хотите пообщаться с кем-то более важным.
-            Причина ухода должна быть нейтральной, короткой и логистически
-            понятной.
-        </p>
-
-        <p>
-            Вам не нужно подробно оправдываться или рассказывать длинную историю.
-            Достаточно обозначить следующий естественный шаг, поблагодарить
-            человека и спокойно завершить разговор.
-        </p>
-
-        <div class="rule-block">
-            <h4>Обновить напиток</h4>
-
-            <blockquote class="dialogue">
-                <p>
-                    — Прошу прощения, мне нужно обновить бокал.
-                    Было очень приятно с вами пообщаться.
-                </p>
-            </blockquote>
-        </div>
-
-        <div class="rule-block">
-            <h4>Поздороваться с организатором</h4>
-
-            <blockquote class="dialogue">
-                <p>
-                    — Извините, я только что заметил организатора вечера,
-                    мне нужно подойти поздороваться. Спасибо за интересный
-                    инсайт о рынке.
-                </p>
-            </blockquote>
-        </div>
-
-        <div class="rule-block">
-            <h4>Ответить на ожидаемый звонок</h4>
-
-            <p>
-                Этот вариант уместен, только если вы предварительно обозначили,
-                что ожидаете важное сообщение или звонок.
-            </p>
-
-            <blockquote class="dialogue">
-                <p>
-                    — Прошу прощения, я жду важный звонок от клиента.
-                    Надеюсь, мы еще пересечемся сегодня.
-                </p>
-            </blockquote>
-        </div>
-
-        <aside class="warning-callout">
-            <p>
-                <strong>Важно:</strong> причина должна быть правдоподобной
-                и не требовать доказательств. Чем подробнее вы оправдываетесь,
-                тем менее естественным выглядит ваш уход.
-            </p>
-        </aside>
-    </section>
-
-    <section class="theory-section">
-        <h4>2. Техника «Резюме и комплимент»</h4>
-
-        <p>
-            Этот способ особенно полезен после глубокой, содержательной
-            или профессиональной беседы. Вы берете ключевую мысль собеседника,
-            кратко возвращаете ее в своей формулировке, благодарите человека
-            и ставите логическую точку.
-        </p>
-
-        <p>
-            Такая техника сочетает парафраз и позитивное закрытие: собеседник
-            видит, что вы действительно слушали, и получает ясный сигнал,
-            что ему не нужно поддерживать разговор из вежливости.
-        </p>
-
-        <div class="case-contrast">
-            <h4>Пример</h4>
-
-            <blockquote class="dialogue">
-                <p>
-                    — Ваша мысль о внедрении нейросетей в логистику
-                    действительно заставила меня задуматься. Спасибо,
-                    что поделились. Не буду вас больше задерживать:
-                    уверен, здесь многие хотят с вами пообщаться.
-                </p>
-            </blockquote>
-        </div>
-
-        <div class="rule-block">
-            <h4>Формула техники</h4>
-
-            <p>
-                <strong>Конкретная мысль собеседника</strong> →
-                <strong>искренняя благодарность</strong> →
-                <strong>уважительное завершение разговора</strong>.
-            </p>
-        </div>
-    </section>
-
-    <section class="theory-section">
-        <h4>3. Техника «Эстафетная палочка»</h4>
-
-        <p>
-            Один из самых элегантных и высоко ценимых способов завершить
-            разговор — не просто оставить человека одного, а передать его
-            в новый содержательный контакт.
-        </p>
-
-        <p>
-            Вы выступаете в роли коннектора: замечаете, кому знакомство
-            может быть полезно, кратко представляете людей друг другу,
-            называете их профессиональный контекст и затем спокойно
-            делаете шаг назад.
-        </p>
-
-        <div class="case-contrast">
-            <h4>Пример</h4>
-
-            <blockquote class="dialogue">
-                <p>
-                    — Кстати, о дизайне интерфейсов. Позвольте познакомить
-                    вас с Анной: она как раз руководит отделом UX.
-                    Анна, это Сергей, у него сильный проект в сфере финтеха.
-                    Думаю, вам будет интересно обсудить это вместе.
-                </p>
-            </blockquote>
-        </div>
-
-        <p>
-            После знакомства не нужно оставаться рядом и контролировать
-            разговор. Вы уже создали ценность для обоих собеседников:
-            представили их друг другу, обозначили общую тему и естественно
-            освободили пространство для нового диалога.
-        </p>
-
-        <blockquote>
-            <p>
-                Хороший выход из беседы может быть полезен не только вам.
-                Он может стать началом ценной связи для другого человека.
-            </p>
-        </blockquote>
-    </section>
-
-    <section class="red-flags">
-        <h4>Главные ошибки при завершении разговора</h4>
-
-        <div class="rule-block">
-            <h4>1. Извиняться за уход</h4>
-
-            <p>
-                Не превращайте обычное завершение беседы в виноватое бегство.
-            </p>
-
-            <blockquote class="dialogue">
-                <p>
-                    — Ой, извините, мне пора бежать, простите ради бога.
-                </p>
-            </blockquote>
-
-            <p>
-                Уходите уверенно и спокойно. Вежливость не требует
-                чрезмерных извинений.
-            </p>
-        </div>
-
-        <div class="rule-block">
-            <h4>2. Обещать то, чего вы не планируете</h4>
-
-            <blockquote class="dialogue">
-                <p>
-                    — Я вам завтра обязательно позвоню.
-                </p>
-            </blockquote>
-
-            <p>
-                Не обещайте последующий контакт, если не собираетесь
-                его поддерживать. Гораздо честнее и достаточно тепло сказать:
-            </p>
-
-            <blockquote class="dialogue">
-                <p>
-                    — Был рад знакомству.
-                </p>
-            </blockquote>
-        </div>
-
-        <div class="rule-block">
-            <h4>3. «Прилипание»</h4>
-
-            <p>
-                Не ждите, пока собеседник начнет смотреть на часы, искать
-                глазами знакомых или придумывать повод уйти от вас.
-                Берите ответственность за завершение разговора на себя.
-            </p>
-
-            <p>
-                Сильный собеседник умеет распознать момент, когда контакт
-                достиг своей высокой точки, и завершить его до появления
-                усталости или неловкой паузы.
-            </p>
-        </div>
-    </section>
-
-    <section class="telemetry">
-        <h4>Резюме</h4>
-
-        <p>
-            Выходите из разговора до того, как в нем появится неловкая пауза.
-            Обоснуйте уход нейтральной причиной, поблагодарите человека
-            за конкретную мысль или передайте его в надежные руки нового
-            собеседника.
-        </p>
-
-        <blockquote>
-            <p>
-                Последняя фраза — это то, что человек запомнит о вас
-                лучше всего.
-            </p>
-        </blockquote>
-    </section>
-
-</article>
-
-
-
-
-
-
-    <button
-        type="button"
-        class="academy-start-btn"
-        onclick="closePopup()">
-        Закончить обучение
-    </button>
-</div>
-  `},
 
 
 "3.1. Обсерватория расстановки сил": 
      {
-    background: "https://static.tildacdn.com/tild3166-6164-4833-b062-366137383262/_.png",
+    background: "https://static.tildacdn.com/tild6337-3663-4937-b736-623461393632/31___.png",
 
     content:
     `
@@ -5126,7 +4854,7 @@ html {
 
 "Зал Хозяев вечера": 
      {
-    background: "https://static.tildacdn.com/tild3166-6164-4833-b062-366137383262/_.png",
+    background: "https://static.tildacdn.com/tild3637-3739-4630-b836-353364333333/photo.png",
 
     content:
     `
@@ -5365,6 +5093,7 @@ html {
 <div class="locked-section" id="talleyrand-result-25">
 
     <section class="telemetry">
+        <br>
         <h4>Разбор испытания</h4>
 
         <p>
@@ -5436,7 +5165,7 @@ html {
             type="button"
             class="inline-complete-btn"
             onclick="closePopup()">
-            Завершить испытание ✓
+            Перейти в Ротонду первого шага ✓
         </button>
     </div>
 
@@ -5448,7 +5177,7 @@ html {
   
 "3.2. Ротонда первого шага": 
      {
-    background: "https://static.tildacdn.com/tild3166-6164-4833-b062-366137383262/_.png",
+    background: "https://static.tildacdn.com/tild6563-3565-4230-a437-313830313732/31___.png",
 
     content:
     `
@@ -5714,7 +5443,7 @@ html {
 
   "Мост малых кругов": 
      {
-    background: "https://static.tildacdn.com/tild3166-6164-4833-b062-366137383262/_.png",
+    background: "https://static.tildacdn.com/tild3831-6564-4365-a435-653736633561/32__.png",
 
     content:
     `
@@ -5944,7 +5673,7 @@ html {
         type="button"
         class="inline-complete-btn"
         onclick="closePopup()">
-        Перейти в Галерею забытых гостей ✓
+        Перейти в Оранжерею забытых гостей ✓
     </button>
 </div>
 
@@ -5954,7 +5683,7 @@ html {
 
 "3.3. Оранжерея забытых гостей": 
      {
-    background: "https://static.tildacdn.com/tild3166-6164-4833-b062-366137383262/_.png",
+    background: "https://static.tildacdn.com/tild3464-3961-4131-a534-373732303832/33___.png",
 
     content:
     `
@@ -6238,15 +5967,15 @@ html {
    <!-- КНОПКА ЗАВЕРШИТЬ В САМОМ КОНЦЕ ТЕОРИИ -->
         <div class="inline-complete-box">
             <button class="inline-complete-btn" onclick="closePopup()">
-                Перейти в интернет-кафе коворкинг ✓
+                Перейти в Старую библиотеку ✓
             </button>
         </div>
     </div>
   `},
 
 
-"Интернет-кафе коворкинг": {
-    background: "https://static.tildacdn.com/tild3261-3639-4338-b236-613632393739/generated-image_21.png",
+"Старая библиотека": {
+    background: "https://static.tildacdn.com/tild3861-6461-4333-b565-643038376634/22_.png",
 
     content: `
         <div class="battle-container">
@@ -6263,7 +5992,7 @@ html {
 
 "3.4. Галерея последних фраз": 
      {
-    background: "https://static.tildacdn.com/tild3166-6164-4833-b062-366137383262/_.png",
+    background: "https://static.tildacdn.com/tild3938-6131-4139-a163-363338383864/_.png",
 
     content:
     `
@@ -6571,7 +6300,7 @@ html {
   <!-- КНОПКА ЗАВЕРШИТЬ В САМОМ КОНЦЕ ТЕОРИИ -->
         <div class="inline-complete-box">
             <button class="inline-complete-btn" onclick="closePopup()">
-                Перейти в интернет-кафе коворкинг ✓
+                Перейти в Кабинет Стратегии ✓
             </button>
         </div>
     </div>
@@ -6586,11 +6315,11 @@ html {
 
 "Кабинет Стратегии": 
      {
-    background: "https://static.tildacdn.com/tild3166-6164-4833-b062-366137383262/_.png",
+    background: "https://static.tildacdn.com/tild6564-6362-4832-b731-633065383366/_.png",
 
     content:
     `
-      <h3>Часть II. <br>Испытание артефакта</h3>
+      
 
 <article class="story-scene">
 
@@ -6739,6 +6468,7 @@ html {
 
     <div class="locked-section" id="artifact-result-23">
         <section class="telemetry">
+            <br>
             <h4>Скрытая логика испытания</h4>
 
             <p>
@@ -6773,7 +6503,7 @@ html {
                 type="button"
                 class="inline-complete-btn"
                 onclick="closePopup()">
-                Завершить испытание ✓
+                Перейти в Outro ✓
             </button>
         </div>
     </div>
@@ -6786,7 +6516,7 @@ html {
 
 "0.Outro": 
      {
-    background: "https://static.tildacdn.com/tild3166-6164-4833-b062-366137383262/_.png",
+    background: "https://static.tildacdn.com/tild3933-6565-4364-b761-373263373336/photo.png",
 
     content:
     `
@@ -7150,7 +6880,7 @@ html {
   `},
 
 "1. Башня The First Impression Tower": {
-    background: "https://ВАШ-АДРЕС-ФОНА-ПЕРВОЙ-БАШНИ.png",
+    background: "https://static.tildacdn.com/tild6636-6266-4139-a464-643034373836/1__The_First_Impress.png",
 
     content: `
         <h3>The First Impression Tower</h3>
@@ -7218,7 +6948,7 @@ html {
 },
 
 "2. Крыло The Conversation Wing": {
-    background: "https://ВАШ-АДРЕС-ФОНА-КРЫЛА-БЕСЕДЫ.png",
+    background: "https://static.tildacdn.com/tild3639-6163-4532-a431-376632323633/2__The_Conversation_.png",
 
     content: `
         <h3>The Conversation Wing</h3>
@@ -7289,7 +7019,7 @@ html {
 },
 
 "3. Башня The Influence Tower": {
-    background: "https://ВАШ-АДРЕС-ФОНА-БАШНИ-ВЛИЯНИЯ.png",
+    background: "https://static.tildacdn.com/tild6533-6365-4262-b933-383864323936/3__The_Influence_Tow.png",
 
     content: `
         <h3>The Influence Tower</h3>
@@ -7441,11 +7171,19 @@ const popupTitle = document.getElementById('popupTitle');
 const popupContent = document.getElementById('popupContent');
 
 function closePopup() {
-    overlay.classList.remove('active');
-    document.querySelector('.popup').classList.remove('iframe-mode');
+    overlay.classList.remove(
+        'active',
+        'has-location-background',
+        'cinematic-opening',
+        'cinematic-blur',
+        'cinematic-ready'
+    );
 
-    // Удаляем картинку локации после закрытия поп-апа
-    overlay.classList.remove('has-location-background');
+    document.querySelector('.popup').classList.remove(
+        'iframe-mode',
+        'battle-mode'
+    );
+
     overlay.style.removeProperty('--location-background');
 }
 
@@ -7533,7 +7271,26 @@ setTimeout(() => {
     popupContent.scrollTop = 0;
 }, 50);
     // Берем фоновую картинку из той же записи contentDatabase.
-if (typeof locationContent === 'object' && locationContent.background) {
+/* ----------------------------------------------------------
+   КИНЕМАТОГРАФИЧЕСКОЕ ОТКРЫТИЕ ЛОКАЦИИ
+   1. Четкий интерьер — 1 секунда.
+   2. Размытие интерьера — 1 секунда.
+   3. Появление поп-апа с контентом.
+---------------------------------------------------------- */
+
+/* Убираем классы, оставшиеся от предыдущей локации */
+overlay.classList.remove(
+    'has-location-background',
+    'cinematic-opening',
+    'cinematic-blur',
+    'cinematic-ready'
+);
+
+/* Назначаем фон выбранной локации */
+if (
+    typeof locationContent === 'object' &&
+    locationContent.background
+) {
     overlay.style.setProperty(
         '--location-background',
         `url("${locationContent.background}")`
@@ -7541,11 +7298,26 @@ if (typeof locationContent === 'object' && locationContent.background) {
 
     overlay.classList.add('has-location-background');
 } else {
-    overlay.classList.remove('has-location-background');
     overlay.style.removeProperty('--location-background');
 }
 
-    overlay.classList.add('active');
+/* Открываем экран: фон четкий, поп-ап еще скрыт */
+overlay.classList.add('active', 'cinematic-opening');
+
+/* Через 1 секунду начинаем размытие */
+window.setTimeout(() => {
+    if (!overlay.classList.contains('active')) return;
+
+    overlay.classList.add('cinematic-blur');
+}, 1000);
+
+/* Еще через 1 секунду показываем поп-ап */
+window.setTimeout(() => {
+    if (!overlay.classList.contains('active')) return;
+
+    overlay.classList.remove('cinematic-opening');
+    overlay.classList.add('cinematic-ready');
+}, 2000);
 }
 });
 
